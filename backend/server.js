@@ -18,7 +18,7 @@ const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
     origin: (origin, callback) => {
-      const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+      const allowedOrigins = ['http://localhost:3000', 'http://localhost:5173', 'https://laborsloom-mern-1.onrender.com'];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
