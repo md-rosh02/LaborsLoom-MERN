@@ -1,0 +1,18 @@
+# Frontend
+frontend/.env
+frontend/.env.local
+frontend/.env.development
+frontend/.env.test
+frontend/.env.production
+frontend/node_modules/
+frontend/build/
+
+# Backend
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.test
+backend/.env.production
+backend/node_modules/
+backend/uploads/
+backend/laborsloom-firebase-adminsdk-fbsvc-*.json
