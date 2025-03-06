@@ -55,7 +55,7 @@ function AvailableJobs() {
   const jobsPerPage = 30;
 
   // Base URL for fetching images from the backend
-  const IMAGE_BASE_URL = 'http://localhost:5000/api/get-image/';
+  const IMAGE_BASE_URL = 'https://laborsloom-mern-1.onrender.com/api/get-image/';
 
   // Fetch jobs
   useEffect(() => {
@@ -74,7 +74,7 @@ function AvailableJobs() {
           jobsData = JSON.parse(cachedJobs);
         } else {
           console.log('Fetching jobs from API');
-          const response = await axios.get('http://localhost:5000/api/jobs');
+          const response = await axios.get('https://laborsloom-mern-1.onrender.com/api/jobs');
           jobsData = response.data;
           console.log('Jobs fetched:', jobsData);
 

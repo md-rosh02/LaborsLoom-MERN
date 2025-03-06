@@ -26,7 +26,7 @@ const JobSection = React.memo(({ title, emoji }) => {
 
   const { data: jobs, isLoading, error, refetch } = useQuery({
     queryKey: ['jobs'],
-    queryFn: () => axios.get('http://localhost:5000/api/jobs').then(res => res.data),
+    queryFn: () => axios.get('https://laborsloom-mern-1.onrender.com/api/jobs').then(res => res.data),
     enabled: false,
     staleTime: Infinity,
     cacheTime: Infinity,

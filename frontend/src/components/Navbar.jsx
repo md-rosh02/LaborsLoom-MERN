@@ -37,7 +37,7 @@ const Navbar = () => {
             const userData = docSnap.data();
             setUserDetails(userData);
             const imageUrl = userData.profileImage
-              ? `http://localhost:5000/api/get-image/${userData.profileImage}?ts=${Date.now()}`
+              ? `https://laborsloom-mern-1.onrender.com/api/get-image/${userData.profileImage}?ts=${Date.now()}`
               : DEFAULT_PROFILE_IMAGE;
             if (!hasLoadedImage || profileImage !== imageUrl) {
               setProfileImage(imageUrl);

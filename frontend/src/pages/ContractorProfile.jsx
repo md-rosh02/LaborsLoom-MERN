@@ -7,7 +7,7 @@ import { auth, db } from '../components/firebase';
 import axios from 'axios';
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:5000', { withCredentials: true });
+const socket = io('https://laborsloom-mern-1.onrender.com', { withCredentials: true });
 
 const ContractorProfile = () => {
   const navigate = useNavigate();
@@ -139,7 +139,7 @@ const ContractorProfile = () => {
 
   const fetchContractorJobs = async (contractorId) => {
     try {
-      const { data } = await axios.get(`http://localhost:5000/api/jobs/contractor/${contractorId}`);
+      const { data } = await axios.get(`https://laborsloom-mern-1.onrender.com/api/jobs/contractor/${contractorId}`);
       setContractorJobs(data);
     } catch (error) {
       setError('Error fetching job postings');
@@ -277,7 +277,7 @@ const ContractorProfile = () => {
     if (!jobToDelete || confirmationTitle !== jobToDelete.jobTitle) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/jobs/${jobToDelete._id}`);
+      await axios.delete(`https://laborsloom-mern-1.onrender.com/api/jobs/${jobToDelete._id}`);
       setContractorJobs((prev) => prev.filter((job) => job._id !== jobToDelete._id));
       closeDeleteDialog();
     } catch (error) {
@@ -393,7 +393,7 @@ const ContractorProfile = () => {
                   selectedFile
                     ? URL.createObjectURL(selectedFile)
                     : userDetails.profileImage
-                    ? `http://localhost:5000/api/get-image/${userDetails.profileImage}`
+                    ? `https://laborsloom-mern-1.onrender.com/api/get-image/${userDetails.profileImage}`
                     : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                 }
                 alt="Profile"
@@ -562,7 +562,7 @@ const ContractorProfile = () => {
                       <div className="flex items-center gap-2">
                         {userDetails.profileImage ? (
                           <img
-                            src={`http://localhost:5000/api/get-image/${userDetails.profileImage}`}
+                            src={`https://laborsloom-mern-1.onrender.com/api/get-image/${userDetails.profileImage}`}
                             alt={`${userDetails.fname}'s profile`}
                             className="h-8 w-8 rounded-full object-cover border border-gray-300"
                           />
@@ -692,7 +692,7 @@ const ContractorProfile = () => {
                   <img
                     src={
                       userDetails.profileImage
-                        ? `http://localhost:5000/api/get-image/${userDetails.profileImage}`
+                        ? `https://laborsloom-mern-1.onrender.com/api/get-image/${userDetails.profileImage}`
                         : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                     }
                     alt="Profile"
@@ -713,7 +713,7 @@ const ContractorProfile = () => {
                     <img
                       src={
                         msg.senderProfile
-                          ? `http://localhost:5000/api/get-image/${msg.senderProfile}`
+                          ? `https://laborsloom-mern-1.onrender.com/api/get-image/${msg.senderProfile}`
                           : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                       }
                       alt={`${msg.senderName}'s Profile`}
@@ -743,7 +743,7 @@ const ContractorProfile = () => {
                       <img
                         src={
                           selectedChat.senderProfile
-                            ? `http://localhost:5000/api/get-image/${selectedChat.senderProfile}`
+                            ? `https://laborsloom-mern-1.onrender.com/api/get-image/${selectedChat.senderProfile}`
                             : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                         }
                         alt={`${selectedChat.senderName}'s Profile`}
@@ -774,7 +774,7 @@ const ContractorProfile = () => {
                           <img
                             src={
                               msg.senderProfile
-                                ? `http://localhost:5000/api/get-image/${msg.senderProfile}`
+                                ? `https://laborsloom-mern-1.onrender.com/api/get-image/${msg.senderProfile}`
                                 : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                             }
                             alt={`${msg.senderName || 'Unknown'}'s Profile`}
@@ -800,7 +800,7 @@ const ContractorProfile = () => {
                           <img
                             src={
                               userDetails.profileImage
-                                ? `http://localhost:5000/api/get-image/${userDetails.profileImage}`
+                                ? `https://laborsloom-mern-1.onrender.com/api/get-image/${userDetails.profileImage}`
                                 : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                             }
                             alt="Your Profile"

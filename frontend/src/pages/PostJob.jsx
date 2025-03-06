@@ -84,7 +84,7 @@ function PostJob() {
     setError('');
   
     try {
-      const response = await axios.post('http://localhost:5000/api/jobs', {
+      const response = await axios.post('https://laborsloom-mern-1.onrender.com/api/jobs', {
         ...formData,
         contractorId: uid,
         contractorName: contractorName,

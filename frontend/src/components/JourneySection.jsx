@@ -58,7 +58,7 @@ const JobSection = ({ title, emoji }) => {
   const [user, setUser] = useState(null);
 
   // Base URL for fetching images from the backend
-  const IMAGE_BASE_URL = 'http://localhost:5000/api/get-image/';
+  const IMAGE_BASE_URL = 'https://laborsloom-mern-1.onrender.com/api/get-image/';
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -70,7 +70,7 @@ const JobSection = ({ title, emoji }) => {
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
     queryFn: async () => {
-      const res = await axios.get('http://localhost:5000/api/jobs');
+      const res = await axios.get('https://laborsloom-mern-1.onrender.com/api/jobs');
       const jobsData = res.data;
       console.log('Jobs fetched for JobSection:', jobsData); // Debug log
       return jobsData;

@@ -75,7 +75,7 @@ const LaborProfile = () => {
             messagesMap.set(senderId, {
               ...msg,
               senderName: senderData.fname || 'Unknown',
-              senderProfile: senderData.profileImage ? `http://localhost:5000/api/get-image/${senderData.profileImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400',
+              senderProfile: senderData.profileImage ? `https://laborsloom-mern-1.onrender.com/api/get-image/${senderData.profileImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400',
             });
           }
         }
@@ -104,7 +104,7 @@ const LaborProfile = () => {
                 ? {
                     ...msg,
                     senderName: senderData.fname || 'Unknown',
-                    senderProfile: senderData.profileImage ? `http://localhost:5000/api/get-image/${senderData.profileImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400',
+                    senderProfile: senderData.profileImage ? `https://laborsloom-mern-1.onrender.com/api/get-image/${senderData.profileImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400',
                   }
                 : msg
             );
@@ -140,7 +140,7 @@ const LaborProfile = () => {
       timestamp: serverTimestamp(),
       read: false,
       senderName: userDetails.fname || 'Unknown',
-      senderProfile: userDetails.profileImage ? `http://localhost:5000/api/get-image/${userDetails.profileImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400',
+      senderProfile: userDetails.profileImage ? `https://laborsloom-mern-1.onrender.com/api/get-image/${userDetails.profileImage}` : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400',
     };
     await addDoc(collection(db, "Messages"), messageData);
     setNewMessage('');
@@ -263,7 +263,7 @@ const LaborProfile = () => {
                       selectedFile
                         ? URL.createObjectURL(selectedFile)
                         : userDetails.profileImage
-                        ? `http://localhost:5000/api/get-image/${userDetails.profileImage}`
+                        ? `https://laborsloom-mern-1.onrender.com/api/get-image/${userDetails.profileImage}`
                         : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                     }
                     alt="Profile"
@@ -390,7 +390,7 @@ const LaborProfile = () => {
                           src={
                             msg.senderProfile.includes('http')
                               ? msg.senderProfile
-                              : `http://localhost:5000/api/get-image/${msg.senderProfile}`
+                              : `https://laborsloom-mern-1.onrender.com/api/get-image/${msg.senderProfile}`
                           }
                           alt={`${msg.senderName}'s Profile`}
                           className="w-10 h-10 rounded-full object-cover mr-3 shadow-sm"
@@ -424,7 +424,7 @@ const LaborProfile = () => {
                                 src={
                                   msg.senderProfile.includes('http')
                                     ? msg.senderProfile
-                                    : `http://localhost:5000/api/get-image/${msg.senderProfile}`
+                                    : `https://laborsloom-mern-1.onrender.com/api/get-image/${msg.senderProfile}`
                                 }
                                 alt={`${msg.senderName || 'Unknown'}'s Profile`}
                                 className="w-8 h-8 rounded-full object-cover flex-shrink-0"
@@ -449,7 +449,7 @@ const LaborProfile = () => {
                               <img
                                 src={
                                   userDetails.profileImage
-                                    ? `http://localhost:5000/api/get-image/${userDetails.profileImage}`
+                                    ? `https://laborsloom-mern-1.onrender.com/api/get-image/${userDetails.profileImage}`
                                     : 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'
                                 }
                                 alt="Your Profile"

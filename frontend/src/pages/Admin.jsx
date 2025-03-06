@@ -12,7 +12,7 @@ import axios from 'axios';
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const socket = io('http://localhost:5000', { withCredentials: true });
+const socket = io('https://laborsloom-mern-1.onrender.com', { withCredentials: true });
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -53,7 +53,7 @@ const AdminPanel = () => {
       // Fetch Jobs from API
       const fetchJobs = async () => {
         try {
-          const response = await axios.get('http://localhost:5000/api/jobs');
+          const response = await axios.get('https://laborsloom-mern-1.onrender.com/api/jobs');
           setJobs(response.data);
         } catch (error) {
           console.error('Error fetching jobs:', error);
@@ -137,7 +137,7 @@ const AdminPanel = () => {
 
   const handleDeleteJob = async (jobId) => {
     try {
-      const response = await axios.delete(`http://localhost:5000/api/jobs/${jobId}`);
+      const response = await axios.delete(`https://laborsloom-mern-1.onrender.com/api/jobs/${jobId}`);
       console.log('Delete response:', response.data);
       setJobs((prev) => prev.filter(job => job._id !== jobId));
       setIsModalOpen(false);
