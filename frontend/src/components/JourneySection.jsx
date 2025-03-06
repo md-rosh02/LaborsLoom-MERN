@@ -6,13 +6,20 @@ import { BoltIcon, ChevronLeftIcon, ChevronRightIcon, Briefcase, MapPin, Trophy,
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { auth, db } from '../components/firebase';
-import { addDoc, collection, serverTimestamp, onSnapshot, query, limit } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, onSnapshot, query, limit, doc, getDoc } from 'firebase/firestore'; // Added getDoc
 import axios from 'axios';
+import io from 'socket.io-client'; // Added Socket.IO client
 import about from '../assets/img/about.jpg';
 
 // Base URL for API (use environment variable)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laborsloom-mern-1.onrender.com';
 const IMAGE_BASE_URL = `${API_BASE_URL}/api/get-image/`;
+
+// Initialize Socket.IO client
+const socket = io(API_BASE_URL, {
+  withCredentials: true,
+  transports: ['websocket', 'polling'], // Fallback to polling if WebSocket fails
+});
 
 // Debounce utility to limit API calls
 const debounce = (func, delay) => {
@@ -64,6 +71,9 @@ const JobSection = ({ title, emoji }) => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        socket.emit('register', currentUser.uid); // Register user with Socket.IO
+      }
     });
     return () => unsubscribe();
   }, [loggedIn]);
@@ -108,7 +118,7 @@ const JobSection = ({ title, emoji }) => {
     setIsSubmitting(true);
     try {
       const job = jobs.find((j) => j._id === contactModalOpen);
-      await addDoc(collection(db, 'Messages'), {
+      const messageData = {
         senderId: user.uid,
         senderName: user.displayName || 'User',
         senderEmail: user.email,
@@ -118,7 +128,14 @@ const JobSection = ({ title, emoji }) => {
         jobId: job._id,
         message,
         timestamp: serverTimestamp(),
-      });
+      };
+
+      // Save to Firebase
+      await addDoc(collection(db, 'Messages'), messageData);
+
+      // Emit via Socket.IO
+      socket.emit('sendMessage', messageData);
+
       setMessageSent(true);
       setContactModalOpen(null);
       setMessage('');
@@ -286,6 +303,19 @@ const JourneySection = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
+  // Socket.IO setup
+  useEffect(() => {
+    socket.on('connect', () => console.log('Connected to Socket.IO'));
+    socket.on('connect_error', (err) => console.error('Socket.IO connection error:', err));
+    socket.on('newMessage', (message) => console.log('New message received:', message));
+
+    return () => {
+      socket.off('connect');
+      socket.off('connect_error');
+      socket.off('newMessage');
+    };
+  }, []);
+
   // Auth State
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -297,6 +327,7 @@ const JourneySection = () => {
             if (docSnap.exists()) setUserDetails(docSnap.data());
           })
           .catch((err) => console.error('Error fetching user details:', err));
+        socket.emit('register', currentUser.uid); // Register user with Socket.IO
       } else {
         setUserDetails({});
       }
@@ -308,7 +339,7 @@ const JourneySection = () => {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await axios.get(`https://laborsloom-mern-1.onrender.com/api/stats`);
+      const res = await axios.get(`${API_BASE_URL}/api/stats`);
       return res.data;
     },
     staleTime: 1000 * 60 * 5, // Refresh every 5 minutes
