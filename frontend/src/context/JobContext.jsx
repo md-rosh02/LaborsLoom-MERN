@@ -11,7 +11,7 @@ export const JobProvider = ({ children }) => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/jobs");
+        const response = await axios.get("https://laborsloom-mern-1.onrender.com/api/jobs");
         setJobs(response.data);
         console.log(response.data);
       } catch (err) {

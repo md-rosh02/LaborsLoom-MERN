@@ -307,7 +307,7 @@ const JourneySection = () => {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await axios.get('http://localhost:5000/api/stats');
+      const res = await axios.get('https://laborsloom-mern-1.onrender.com/api/stats');
       return res.data;
     },
     staleTime: 1000 * 60 * 5, // Refresh every 5 minutes
@@ -358,7 +358,7 @@ const JourneySection = () => {
     }
     setIsSearching(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/jobs/search', {
+      const response = await axios.get('https://laborsloom-mern-1.onrender.com/api/jobs/search', {
         params: { q: category }, // Send as 'q' since backend uses it if 'category' is undefined
       });
       console.log('Category search results from API:', response.data);
