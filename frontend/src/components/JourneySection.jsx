@@ -10,6 +10,10 @@ import { addDoc, collection, serverTimestamp, onSnapshot, query, limit } from 'f
 import axios from 'axios';
 import about from '../assets/img/about.jpg';
 
+// Base URL for API (use environment variable)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laborsloom-mern-1.onrender.com';
+const IMAGE_BASE_URL = `${API_BASE_URL}/api/get-image/`;
+
 // Debounce utility to limit API calls
 const debounce = (func, delay) => {
   let timeoutId;
@@ -57,9 +61,6 @@ const JobSection = ({ title, emoji }) => {
   const { loggedIn } = useAuth();
   const [user, setUser] = useState(null);
 
-  // Base URL for fetching images from the backend
-  const IMAGE_BASE_URL = 'https://laborsloom-mern-1.onrender.com/api/get-image/';
-
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
@@ -70,9 +71,9 @@ const JobSection = ({ title, emoji }) => {
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
     queryFn: async () => {
-      const res = await axios.get('https://laborsloom-mern-1.onrender.com/api/jobs');
+      const res = await axios.get(`${API_BASE_URL}/api/jobs`);
       const jobsData = res.data;
-      console.log('Jobs fetched for JobSection:', jobsData); // Debug log
+      console.log('Jobs fetched for JobSection:', jobsData);
       return jobsData;
     },
     enabled: true,
@@ -307,7 +308,7 @@ const JourneySection = () => {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await axios.get('https://laborsloom-mern-1.onrender.com/api/stats');
+      const res = await axios.get(`${API_BASE_URL}/api/stats`);
       return res.data;
     },
     staleTime: 1000 * 60 * 5, // Refresh every 5 minutes
@@ -358,8 +359,8 @@ const JourneySection = () => {
     }
     setIsSearching(true);
     try {
-      const response = await axios.get('https://laborsloom-mern-1.onrender.com/api/jobs/search', {
-        params: { q: category }, // Send as 'q' since backend uses it if 'category' is undefined
+      const response = await axios.get(`${API_BASE_URL}/api/jobs/search`, {
+        params: { q: category },
       });
       console.log('Category search results from API:', response.data);
       setSearchResults(response.data);
@@ -374,14 +375,14 @@ const JourneySection = () => {
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    fetchSearchResults(query); // Treat all input as category
+    fetchSearchResults(query);
   };
 
   const handleSearchSelect = () => {
     if (!user) {
       navigate('/signup');
     } else {
-      navigate('/available-jobs'); // Navigate to available-jobs instead of job detail
+      navigate('/available-jobs');
     }
     setSearchQuery('');
     setSearchResults([]);
@@ -391,7 +392,6 @@ const JourneySection = () => {
   const handlePostJobClick = () => (!user ? navigate('/signup') : navigate('/post-job'));
   const handleGetStartedClick = () => (!user ? navigate('/signup') : navigate('/available-jobs'));
 
-  // Show loading or error state for stats
   if (statsLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50">Loading stats...</div>;
   }
@@ -439,7 +439,7 @@ const JourneySection = () => {
                     <motion.div
                       key={job._id}
                       whileHover={{ backgroundColor: 'rgba(79, 70, 229, 0.1)' }}
-                      onClick={handleSearchSelect} // Changed to use handleSearchSelect without jobId
+                      onClick={handleSearchSelect}
                       className="p-4 cursor-pointer border-b border-gray-100 flex items-center gap-3"
                     >
                       <Briefcase className="h-5 w-5 text-indigo-600" />
@@ -476,7 +476,7 @@ const JourneySection = () => {
         {/* Nearby Jobs */}
         <JobSection title="Nearby Jobs" emoji="⚡️" />
 
-        {/* About Section (No Parallax) */}
+        {/* About Section */}
         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.8 }} className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col md:flex-row gap-10 items-center mb-20">
           <motion.img src={about} alt="About" className="w-full md:w-1/2 h-96 object-cover rounded-2xl" whileHover={{ scale: 1.05 }} />
           <div className="flex-1 text-left">

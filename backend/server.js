@@ -15,10 +15,17 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+// Update allowed origins for production
+const allowedOrigins = [
+  'labors-loom-mern.vercel.app', // Replace with your actual Vercel URL
+  'https://laborsloom-mern-1.onrender.com', // Backend URL (self-reference, optional)
+];
+
+// Socket.IO CORS configuration
 const io = socketIo(server, {
   cors: {
     origin: (origin, callback) => {
-      const allowedOrigins = ['https://laborsloom-mern-1.onrender.com'];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -33,7 +40,17 @@ const io = socketIo(server, {
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({ origin: 'https://laborsloom-mern-1.onrender.com' }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/api', uploadRoutes);
@@ -43,7 +60,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/jobs', jobRouter);
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, { 
+  useNewUrlParser: true, 
+  useUnifiedTopology: true 
+})
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => console.error('MongoDB connection error:', error));
 
@@ -151,7 +171,6 @@ app.get('/api/get-image/:imageId', (req, res) => {
     });
   } else {
     console.error(`Image not found: ${imagePath}`);
-    // Serve a default image instead of JSON error
     const defaultImagePath = path.join(__dirname, 'uploads', 'default-profile.png');
     if (fs.existsSync(defaultImagePath)) {
       res.sendFile(defaultImagePath);
@@ -202,6 +221,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
+});
+
+// Health Check Endpoint (Optional for Render)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
 // Start Server
