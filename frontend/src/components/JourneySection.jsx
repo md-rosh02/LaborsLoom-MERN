@@ -6,22 +6,24 @@ import { BoltIcon, ChevronLeftIcon, ChevronRightIcon, Briefcase, MapPin, Trophy,
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { auth, db } from '../components/firebase';
-import { addDoc, collection, serverTimestamp, onSnapshot, query, limit, doc, getDoc } from 'firebase/firestore'; // Added getDoc
+import { addDoc, collection, serverTimestamp, onSnapshot, query, limit, doc, getDoc } from 'firebase/firestore';
 import axios from 'axios';
-import io from 'socket.io-client'; // Added Socket.IO client
+import io from 'socket.io-client';
 import about from '../assets/img/about.jpg';
 
-// Base URL for API (use environment variable)
+// Base URL for API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laborsloom-mern-1.onrender.com';
-const IMAGE_BASE_URL = `${API_BASE_URL}/api/get-image/`;
+const IMAGE_BASE_URL = `/api/get-image/`;
 
 // Initialize Socket.IO client
 const socket = io(API_BASE_URL, {
   withCredentials: true,
-  transports: ['websocket', 'polling'], // Fallback to polling if WebSocket fails
+  transports: ['polling'], // Force polling for now
+  reconnectionAttempts: 5, // Limit reconnection attempts
+  reconnectionDelay: 1000, // Delay between retries
 });
 
-// Debounce utility to limit API calls
+// Debounce utility
 const debounce = (func, delay) => {
   let timeoutId;
   return (...args) => {
@@ -30,7 +32,7 @@ const debounce = (func, delay) => {
   };
 };
 
-// ErrorPage Component
+// ErrorPage Component (unchanged)
 const ErrorPage = ({ errorMessage = 'Something went wrong', actionText = 'Back to Home', actionPath = '/' }) => {
   const navigate = useNavigate();
   return (
@@ -72,7 +74,7 @@ const JobSection = ({ title, emoji }) => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        socket.emit('register', currentUser.uid); // Register user with Socket.IO
+        socket.emit('register', currentUser.uid);
       }
     });
     return () => unsubscribe();
@@ -81,14 +83,14 @@ const JobSection = ({ title, emoji }) => {
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
     queryFn: async () => {
-      const res = await axios.get(`${API_BASE_URL}/api/jobs`);
+      const res = await axios.get(`/api/jobs`);
       const jobsData = res.data;
       console.log('Jobs fetched for JobSection:', jobsData);
       return jobsData;
     },
     enabled: true,
-    staleTime: 1000 * 60 * 60, // 1 hour
-    cacheTime: 1000 * 60 * 60 * 24, // 24 hours
+    staleTime: 1000 * 60 * 60,
+    cacheTime: 1000 * 60 * 60 * 24,
   });
 
   const handleScroll = (direction) => {
@@ -130,10 +132,7 @@ const JobSection = ({ title, emoji }) => {
         timestamp: serverTimestamp(),
       };
 
-      // Save to Firebase
       await addDoc(collection(db, 'Messages'), messageData);
-
-      // Emit via Socket.IO
       socket.emit('sendMessage', messageData);
 
       setMessageSent(true);
@@ -147,13 +146,8 @@ const JobSection = ({ title, emoji }) => {
     }
   };
 
-  if (isLoading) {
-    return <div className="py-16 text-center text-gray-500">Loading jobs...</div>;
-  }
-
-  if (error) {
-    return <ErrorPage errorMessage="Failed to load jobs. Please try again later." />;
-  }
+  if (isLoading) return <div className="py-16 text-center text-gray-500">Loading jobs...</div>;
+  if (error) return <ErrorPage errorMessage="Failed to load jobs. Please try again later." />;
 
   return (
     <div className="py-16 bg-gradient-to-b from-gray-50 to-indigo-100">
@@ -303,16 +297,20 @@ const JourneySection = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
-  // Socket.IO setup
+  // Socket.IO setup with detailed logging
   useEffect(() => {
-    socket.on('connect', () => console.log('Connected to Socket.IO'));
+    socket.on('connect', () => console.log('Socket.IO connected successfully'));
     socket.on('connect_error', (err) => console.error('Socket.IO connection error:', err));
     socket.on('newMessage', (message) => console.log('New message received:', message));
+    socket.on('reconnect_attempt', (attempt) => console.log('Reconnection attempt:', attempt));
+    socket.on('reconnect_failed', () => console.error('Socket.IO reconnection failed'));
 
     return () => {
       socket.off('connect');
       socket.off('connect_error');
       socket.off('newMessage');
+      socket.off('reconnect_attempt');
+      socket.off('reconnect_failed');
     };
   }, []);
 
@@ -327,7 +325,7 @@ const JourneySection = () => {
             if (docSnap.exists()) setUserDetails(docSnap.data());
           })
           .catch((err) => console.error('Error fetching user details:', err));
-        socket.emit('register', currentUser.uid); // Register user with Socket.IO
+        socket.emit('register', currentUser.uid);
       } else {
         setUserDetails({});
       }
@@ -339,12 +337,12 @@ const JourneySection = () => {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await axios.get(`${API_BASE_URL}/api/stats`);
+      const res = await axios.get(`/api/stats`, { withCredentials: true });
       return res.data;
     },
-    staleTime: 1000 * 60 * 5, // Refresh every 5 minutes
-    cacheTime: 1000 * 60 * 60, // 1 hour
-    refetchInterval: 1000 * 60, // Refetch every minute for semi-real-time updates
+    staleTime: 1000 * 60 * 5,
+    cacheTime: 1000 * 60 * 60,
+    refetchInterval: 1000 * 60,
   });
 
   useEffect(() => {
@@ -376,12 +374,12 @@ const JourneySection = () => {
     if (testimonials.length > 0) {
       const interval = setInterval(() => {
         setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-      }, 5000); // Rotate every 5 seconds
+      }, 5000);
       return () => clearInterval(interval);
     }
   }, [testimonials]);
 
-  // Search Logic (Category Only)
+  // Search Logic
   const fetchSearchResults = debounce(async (category) => {
     if (!category.trim()) {
       setSearchResults([]);
@@ -390,7 +388,7 @@ const JourneySection = () => {
     }
     setIsSearching(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/jobs/search`, {
+      const response = await axios.get(`/api/jobs/search`, {
         params: { q: category },
       });
       console.log('Category search results from API:', response.data);
@@ -423,10 +421,7 @@ const JourneySection = () => {
   const handlePostJobClick = () => (!user ? navigate('/signup') : navigate('/post-job'));
   const handleGetStartedClick = () => (!user ? navigate('/signup') : navigate('/available-jobs'));
 
-  if (statsLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50">Loading stats...</div>;
-  }
-
+  if (statsLoading) return <div className="min-h-screen flex items-center justify-center bg-gray-50">Loading stats...</div>;
   if (statsError) {
     console.error('Stats fetch error:', statsError);
     return <ErrorPage errorMessage="Failed to load stats. Please try again later." />;
@@ -435,7 +430,6 @@ const JourneySection = () => {
   return (
     <motion.div ref={journeyRef} initial={{ opacity: 0 }} animate={journeyInView ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 1 }} className="min-h-screen bg-gray-50 scroll-smooth">
       <div className="max-w-7xl mx-auto px-4 py-0 pt-50 relative">
-        {/* Header */}
         <motion.div className="flex items-center mb-5 justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
           <h1 className="text-5xl md:text-9xl font-extrabold text-indigo-700">LaborLoom</h1>
         </motion.div>
@@ -443,7 +437,6 @@ const JourneySection = () => {
           Connecting talent with opportunity in real-time.
         </motion.p>
 
-        {/* Interactive Search */}
         <div className="flex flex-col md:flex-row gap-6 justify-center mb-20">
           <motion.div initial={{ x: -50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.6 }} className="relative flex-1 max-w-lg">
             <input
@@ -504,10 +497,8 @@ const JourneySection = () => {
           </motion.div>
         </div>
 
-        {/* Nearby Jobs */}
         <JobSection title="Nearby Jobs" emoji="⚡️" />
 
-        {/* About Section */}
         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.8 }} className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col md:flex-row gap-10 items-center mb-20">
           <motion.img src={about} alt="About" className="w-full md:w-1/2 h-96 object-cover rounded-2xl" whileHover={{ scale: 1.05 }} />
           <div className="flex-1 text-left">
@@ -523,7 +514,6 @@ const JourneySection = () => {
           </div>
         </motion.div>
 
-        {/* Updated Shattering Limits */}
         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.8 }} className="bg-gradient-to-r from-indigo-100 to-purple-100 p-10 rounded-2xl mb-20">
           <h3 className="text-4xl md:text-5xl font-bold text-center mb-12 text-indigo-700">Shattering Limits</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -551,7 +541,6 @@ const JourneySection = () => {
           </div>
         </motion.div>
 
-        {/* Testimonial Carousel */}
         {testimonials.length > 0 && (
           <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="mb-20">
             <h3 className="text-4xl font-bold text-center mb-12 text-indigo-700">What Our Users Say</h3>
@@ -589,7 +578,6 @@ const JourneySection = () => {
           </motion.div>
         )}
 
-        {/* Footer */}
         <motion.footer initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8, duration: 0.8 }} className="bg-gray-50 py-10 text-center">
           <h4 className="text-2xl font-bold mb-4 text-indigo-700">Ready to Shape the Future?</h4>
           <p className="mb-6 text-gray-600">Join a movement redefining how work gets done.</p>

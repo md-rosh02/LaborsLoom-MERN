@@ -16,53 +16,65 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Update allowed origins for production
+// Allowed origins
 const allowedOrigins = [
-  'labors-loom-mern.vercel.app', // Replace with your actual Vercel URL
-  'https://laborsloom-mern-1.onrender.com', // Backend URL (self-reference, optional)
+  'http://localhost:5173', // Local dev
+  'http://localhost:3000', // Optional local dev
+  'https://labors-loom-mern.vercel.app', // Production frontend
+  'https://laborsloom-mern-1.onrender.com', // Backend self-reference
 ];
 
-// Socket.IO CORS configuration
+// CORS middleware for Express
+app.use(cors({
+  origin: (origin, callback) => {
+    console.log(`CORS check - Origin: ${origin}`);
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`CORS blocked - Origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Handle preflight OPTIONS requests
+app.options('*', cors());
+
+// Socket.IO setup with CORS
 const io = socketIo(server, {
   cors: {
     origin: (origin, callback) => {
+      console.log(`Socket.IO CORS check - Origin: ${origin}`);
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.log(`Socket.IO CORS blocked - Origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST'],
     credentials: true,
   },
+  path: '/socket.io', // Explicit path
+  transports: ['polling'], // Force polling for Render free tier
 });
 
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
-}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use('/api', uploadRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Routes
+app.use('/api', uploadRoutes);
 app.use('/api/jobs', jobRouter);
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, { 
-  useNewUrlParser: true, 
-  useUnifiedTopology: true 
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => console.error('MongoDB connection error:', error));
@@ -74,6 +86,7 @@ app.get('/api/user/:uid', async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
+    console.error('Error fetching user:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -86,32 +99,30 @@ app.put('/api/user/:uid', async (req, res) => {
     if (!updatedUser) return res.status(404).json({ message: 'User not found' });
     res.json(updatedUser);
   } catch (error) {
+    console.error('Error updating user:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Job Search Endpoint with Category Filtering
+// Job Search Endpoint
 app.get('/api/jobs/search', async (req, res) => {
   const { q, category } = req.query;
-  console.log('Search request received:', { q, category });
+  console.log('Search request:', { q, category });
 
   const searchCategory = category || q;
   if (!searchCategory) {
-    console.log('No category provided, returning empty array');
+    console.log('No category provided');
     return res.json([]);
   }
 
   try {
-    const query = {
-      category: { $regex: searchCategory, $options: 'i' },
-    };
-
-    console.log('MongoDB query:', JSON.stringify(query, null, 2));
+    const query = { category: { $regex: searchCategory, $options: 'i' } };
+    console.log('MongoDB query:', query);
     const jobs = await Job.find(query).limit(10);
-    console.log('Search results from DB:', jobs);
+    console.log('Search results:', jobs);
     res.json(jobs);
   } catch (error) {
-    console.error('Search error:', error.message, error.stack);
+    console.error('Search error:', error);
     res.status(500).json({ message: 'Search failed', error: error.message });
   }
 });
@@ -126,18 +137,16 @@ app.get('/api/jobs', async (req, res) => {
     const jobsWithImages = await Promise.all(jobs.map(async (job) => {
       const user = await User.findOne({ uid: job.contractorId });
       const profileImage = user?.profileImage || '';
-      console.log(`Job ${job._id} - contractorId: ${job.contractorId}, profileImage: ${profileImage}`);
       return { ...job, profileImage };
     }));
-    console.log('Jobs with images:', jobsWithImages);
     res.json(jobsWithImages);
   } catch (error) {
-    console.error('Error fetching jobs:', error.message, error.stack);
-    res.status(500).json({ message: 'Server error', details: error.message });
+    console.error('Error fetching jobs:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Get Job by ID with Contractor Name from Users
+// Get Job by ID
 app.get('/api/jobs/:id', async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -152,7 +161,7 @@ app.get('/api/jobs/:id', async (req, res) => {
     res.json({ ...job.toObject(), contractorName });
   } catch (error) {
     console.error('Error fetching job:', error);
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -161,7 +170,6 @@ app.get('/api/get-image/:imageId', (req, res) => {
   const { imageId } = req.params;
   const imagePath = path.join(__dirname, 'uploads', imageId);
 
-  console.log(`Attempting to serve image: ${imagePath}`);
   if (fs.existsSync(imagePath)) {
     res.sendFile(imagePath, (err) => {
       if (err) {
@@ -170,12 +178,11 @@ app.get('/api/get-image/:imageId', (req, res) => {
       }
     });
   } else {
-    console.error(`Image not found: ${imagePath}`);
     const defaultImagePath = path.join(__dirname, 'uploads', 'default-profile.png');
     if (fs.existsSync(defaultImagePath)) {
       res.sendFile(defaultImagePath);
     } else {
-      res.status(404).json({ message: 'Image not found, and no default image available' });
+      res.status(404).json({ message: 'Image not found' });
     }
   }
 });
@@ -183,24 +190,30 @@ app.get('/api/get-image/:imageId', (req, res) => {
 // Stats Endpoint
 app.get('/api/stats', async (req, res) => {
   try {
-    const jobsPosted = await Job.countDocuments();
-    const successRate = 95; // Placeholder: Replace with actual logic if available
-    const citiesCovered = await Job.distinct('location').then(locations => locations.length);
-    const activeUsers = await User.countDocuments({ status: 'active' });
-
-    res.json({
-      jobsPosted,
-      successRate,
-      citiesCovered,
-      activeUsers,
+    console.log('Fetching stats...');
+    const jobsPosted = await Job.countDocuments().catch(err => {
+      throw new Error(`Jobs count failed: ${err.message}`);
     });
+    const successRate = 95; // Placeholder
+    const citiesCovered = await Job.distinct('location')
+      .then(locations => locations?.length || 0)
+      .catch(err => {
+        throw new Error(`Cities count failed: ${err.message}`);
+      });
+    const activeUsers = await User.countDocuments({ status: 'active' }).catch(err => {
+      throw new Error(`Users count failed: ${err.message}`);
+    });
+
+    const stats = { jobsPosted, successRate, citiesCovered, activeUsers };
+    console.log('Stats fetched:', stats);
+    res.json(stats);
   } catch (error) {
     console.error('Error fetching stats:', error);
-    res.status(500).json({ error: 'Failed to fetch stats' });
+    res.status(500).json({ error: 'Failed to fetch stats', details: error.message });
   }
 });
 
-// Socket.IO Setup for Real-Time Messaging
+// Socket.IO Setup
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
@@ -210,12 +223,16 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sendMessage', async (message) => {
-    console.log('Message received on server:', message);
-    if (!message.senderProfile) {
-      const sender = await User.findOne({ uid: message.senderId });
-      message.senderProfile = sender?.profileImage || '';
+    console.log('Message received:', message);
+    try {
+      if (!message.senderProfile) {
+        const sender = await User.findOne({ uid: message.senderId });
+        message.senderProfile = sender?.profileImage || '';
+      }
+      io.to(message.receiverId).emit('newMessage', message);
+    } catch (error) {
+      console.error('Error processing message:', error);
     }
-    io.to(message.receiverId).emit('newMessage', message);
   });
 
   socket.on('disconnect', () => {
@@ -223,7 +240,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Health Check Endpoint (Optional for Render)
+// Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
