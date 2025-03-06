@@ -83,7 +83,7 @@ const JobSection = ({ title, emoji }) => {
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
     queryFn: async () => {
-      const res = await axios.get(`/api/jobs`);
+      const res = await axios.get(`https://laborsloom-mern-1.onrender.com/api/jobs`);
       const jobsData = res.data;
       console.log('Jobs fetched for JobSection:', jobsData);
       return jobsData;
