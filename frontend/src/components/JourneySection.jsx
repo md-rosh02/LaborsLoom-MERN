@@ -13,7 +13,7 @@ import about from '../assets/img/about.jpg';
 
 // Base URL for API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://laborsloom-mern-1.onrender.com';
-const IMAGE_BASE_URL = `${API_BASE_URL}/api/get-image/`;
+const IMAGE_BASE_URL = `https://laborsloom-mern-1.onrender.com/api/get-image/`;
 
 // Initialize Socket.IO client
 const socket = io(API_BASE_URL, {
@@ -337,7 +337,7 @@ const JourneySection = () => {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await axios.get(`${API_BASE_URL}/api/stats`, { withCredentials: true });
+      const res = await axios.get(`https://laborsloom-mern-1.onrender.com/api/stats`, { withCredentials: true });
       return res.data;
     },
     staleTime: 1000 * 60 * 5,
