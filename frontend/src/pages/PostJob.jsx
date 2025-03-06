@@ -28,15 +28,15 @@ function PostJob() {
   });
 
   const jobCategories = [
-    'Software Development',
-    'Design',
-    'Marketing',
-    'Sales',
-    'Customer Service',
-    'Finance',
-    'Human Resources',
-    'Project Management',
-    'Data Science',
+    'Village School Teacher',
+    'Dairy Farm Worker',
+    'Carpenter',
+    'Blacksmith',
+    'Mason',
+    'Electrician',
+    'Plumber',
+    'Tailor',
+    'Shopkeeper',
     'Other'
   ];
 
