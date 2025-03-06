@@ -106,7 +106,7 @@ The following individuals have contributed to the development of LaborsLoom. Tha
 Want to contribute? Feel free to **fork the repository**, create a feature branch, and submit a pull request. Check out our **Contributing Guidelines** (if applicable) for more details.
 
 ## License
-This project is licensed under the **MIT License**. Feel free to use, modify, and distribute it as per the license terms.
+This project is licensed under the **REC License**😂. Feel free to break, blast, and distribute it as per the REC terms.
 
 ---
 _If you find this project useful, consider giving it a ⭐ on GitHub!_ 🚀
