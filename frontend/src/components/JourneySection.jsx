@@ -308,7 +308,7 @@ const JourneySection = () => {
   const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const res = await axios.get(`${API_BASE_URL}/api/stats`);
+      const res = await axios.get(`https://laborsloom-mern-1.onrender.com/api/stats`);
       return res.data;
     },
     staleTime: 1000 * 60 * 5, // Refresh every 5 minutes
